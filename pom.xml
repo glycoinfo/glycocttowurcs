@@ -12,8 +12,8 @@
 			<url>http://nexus.glycoinfo.org/nexus/content/repositories/releases/</url>
 		</repository>
 		<repository>
-			<id>nexus-glycoinfo</id>
-			<name>Internal Releases</name>
+			<id>nexus-glycoinfo-snapshots</id>
+			<name>Internal Snapshots</name>
 			<url>http://nexus.glycoinfo.org/nexus/content/repositories/snapshots/</url>
 		</repository>
 	</repositories>
