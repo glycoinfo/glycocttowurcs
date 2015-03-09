@@ -135,7 +135,26 @@ public class example {
 		System.out.println( t_exporter3.getWURCS() );
 		System.out.println( t_exporter3.getWURCSCompress() );
 
-
+		t_strCode
+		= "RES\n"
+		+ "1r:r1\n"
+		+ "REP\n"
+		+ "REP1:2o(4+1)2d=-1--1\n"
+		+ "RES\n"
+		+ "2b:b-dgal-HEX-1:5|6:a\n"
+		+ "UND\n"
+		+ "UND1:-1.0:-1.0\n"
+		+ "ParentIDs:2\n"
+		+ "SubtreeLinkageID1:o(2|3+1)n\n"
+		+ "RES\n"
+		+ "3s:acetyl\n"
+		+ "UND2:-1.0:-1.0\n"
+		+ "ParentIDs:2\n"
+		+ "SubtreeLinkageID1:o(6+1)n\n"
+		+ "RES\n"
+		+ "4s:methyl\n"
+		;
+/*
 		t_strCode
 		= "RES\n"
 		+ "1b:b-dglc-HEX-x:x\n"
@@ -204,6 +223,7 @@ public class example {
 		+ "LIN\n"
 		+ "19:23d(5+1)24n\n"
 	;
+	*/
 	System.out.println( t_strCode );
 
 	try {

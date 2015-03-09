@@ -24,18 +24,17 @@ public class GlycoCTtoWURCSfromFilebyID extends GlycoCTtoWURCSfromFile {
 
 		// for GlycomeDB
 		String t_strFileNameR = t_strFilePath + "GlycomeDB_GlycoCTList_uniqueID_20140613112537.txt";
-		String charSet = "utf-8";
 		String ID ="";
 		try{
 			String line = null;
-			BufferedReader br = openTextFileR( t_strFileNameR, charSet );
+			BufferedReader br = openTextFileR( t_strFileNameR );
 
 			t_strCode = "";
 			while ( (line = br.readLine())!=null ) {
 //				System.out.println(line);
-				Matcher mat = Pattern.compile("^GlycomeDB_ID:(.*)$").matcher(line);
+				Matcher mat = Pattern.compile("^(.*)?ID:(.*)$").matcher(line);
 				if(mat.find()) {
-					ID = mat.group(1);
+					ID = mat.group(2);
 //					System.out.printf("%s\n", ID);
 					continue;
 				}
@@ -43,7 +42,7 @@ public class GlycoCTtoWURCSfromFilebyID extends GlycoCTtoWURCSfromFile {
 				if ( line.length() == 0 ) {
 					if ( t_strCode == "" ) continue;
 
-					if ( ID.equals("15606") ) break;
+					if ( ID.equals("3221") ) break;
 					t_strCode = "";
 					continue;
 				}
@@ -54,13 +53,17 @@ public class GlycoCTtoWURCSfromFilebyID extends GlycoCTtoWURCSfromFile {
 			e.printStackTrace(System.err);
 		}
 
+		StringBuffer sb = new StringBuffer("");
 		try {
+			System.out.println(t_strCode);
 			Sugar gx = t_objImporterGlycoCT.parse(t_strCode);
-			gx = normalizeSugar(gx);
+			gx = normalizeSugar(gx, sb);
+			if ( !sb.toString().equals("") )
+				System.out.println(sb.toString());
 			t_objExporterWURCS.start(gx);
 //			System.out.println( ID + "\t" + t_objExporterWURCS.getWURCS() );
 			String t_strWURCS = t_objExporterWURCS.getWURCS();
-			String t_strWURCSCompress = t_objExporterWURCS.getWURCSCompress();
+			String t_strWURCSCompress = t_objExporterWURCS.getWURCSCompressWithRepeat();
 			System.out.println( ID + "\t" + t_strWURCS );
 			System.out.println( "Length: " + t_strWURCS.length() );
 			System.out.println( ID + "\t" + t_strWURCSCompress );
@@ -82,6 +85,8 @@ public class GlycoCTtoWURCSfromFilebyID extends GlycoCTtoWURCSfromFile {
 			System.out.println( ID + "\t" + message);
 		} catch ( GlycoVisitorException e ) {
 			System.out.println(e.getErrorMessage());
+			if ( !sb.toString().equals("") )
+				System.out.println(sb.toString());
 			System.out.println( ID + "\t" + e.getErrorMessage());
 		} catch (UnsupportedEncodingException e) {
 			// TODO 自動生成された catch ブロック

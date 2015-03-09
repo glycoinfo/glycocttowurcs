@@ -44,13 +44,6 @@ public class MAP {
 		String t_strParentTypes = "";
 		String t_strChildTypes = "";
 
-		if ( this.m_objChildEdge == null ) {
-			t_strMAP = this.m_objToMAP.getMAPforBMU();
-		} else {
-			t_strMAP = this.m_objToMAP.getMAPforMLU();
-		}
-		if ( t_strMAP == null) return t_strMAP;
-
 		ArrayList<Linkage> t_aParentLink = this.m_objParentEdge.getGlycosidicLinkages();
 		String subName = this.m_objToMAP.getName();
 		if ( subName == "anhydro" || subName == "epoxy" || subName == "lactone" ) {
@@ -66,6 +59,13 @@ public class MAP {
 			return t_strMAP;
 		}
 
+		if ( this.m_objChildEdge == null && t_aParentLink.size() == 1 ) {
+			t_strMAP = this.m_objToMAP.getMAPforBMU();
+		} else {
+			t_strMAP = this.m_objToMAP.getMAPforMLU();
+		}
+		if ( t_strMAP == null) return t_strMAP;
+
 		for (Linkage t_objLink : t_aParentLink) {
 			t_strParentTypes += t_objLink.getParentLinkageType().getType();
 			String t_strLinks = "";
@@ -80,7 +80,7 @@ public class MAP {
 				if(t_strParentPos != "") t_strParentPos += "u";
 				if(t_strParentTypes.length() > 1) t_strLinks += "d";
 			}
-			if(t_strParentPos != "") t_strParentPos += ",";
+			if(t_strParentPos != "") t_strParentPos += "-";
 			t_strParentPos += t_strLinks;
 		}
 

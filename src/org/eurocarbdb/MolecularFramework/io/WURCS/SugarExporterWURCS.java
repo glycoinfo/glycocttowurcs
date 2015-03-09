@@ -31,11 +31,13 @@ public class SugarExporterWURCS implements GlycoVisitor
 	private String m_strVersion = "2.0";
 	private String m_strWURCSCode = "";
 	private String m_strWURCSCodeCompress = "";
+	private String m_strWURCSCodeCompressWithRepeat = "";
 
 	private String m_sRES = "";
 	private String m_sLIN = "";
 	private ArrayList<String> m_aUniqueRESs = new ArrayList<String>();
 	private String m_sRESCompress = "";
+	private String m_sRESCompressWithRepeat = "";
 
 	private ArrayList<RES> m_aRESs = new ArrayList<RES>();
 	private ArrayList<LIN> m_aLINs = new ArrayList<LIN>();
@@ -84,6 +86,9 @@ public class SugarExporterWURCS implements GlycoVisitor
 		GlycoTraverser t_objTraverser = this.getTraverser(this);
 		t_objTraverser.traverseGraph(a_objRepeat);
 
+		// Count end of repeat
+		this.m_aRESs.get(this.m_aRESs.size()-1).countEndOfRepeat();
+
 		GlycoEdge t_objEdge = a_objRepeat.getParentEdge();
 		if ( t_objEdge != null )
 		{
@@ -96,6 +101,7 @@ public class SugarExporterWURCS implements GlycoVisitor
 		try {
 			for ( GlycoNode t_objRoot : a_objRepeat.getRootNodes() ) {
 				RES t_objBMU = this.m_hashNodeToBMU.get(t_objRoot);
+				// Set root ob subgraph
 				if ( t_objBMU != null ) t_objBMU.setRootOfSubgraph();
 			}
 		} catch (GlycoconjugateException e) {
@@ -229,8 +235,19 @@ public class SugarExporterWURCS implements GlycoVisitor
 					this.m_aUniqueRESs.add(sRESCode);
 				}
 //				if ( !this.m_sBMUCompress.equals("") ) this.m_sBMUCompress += "|";
-				if ( !this.m_sRESCompress.equals("") ) this.m_sRESCompress += "-";
-				this.m_sRESCompress += this.m_aUniqueRESs.indexOf(sRESCode)+1;
+				if ( !this.m_sRESCompress.equals("") ) {
+					this.m_sRESCompress += "-";
+					this.m_sRESCompressWithRepeat += "-";
+				}
+
+				for ( int i=0; i<t_objRES.getStartOfRepeatCount(); i++ )
+					this.m_sRESCompressWithRepeat += "<";
+
+				this.m_sRESCompress           += this.m_aUniqueRESs.indexOf(sRESCode)+1;
+				this.m_sRESCompressWithRepeat += this.m_aUniqueRESs.indexOf(sRESCode)+1;
+
+				for ( int i=0; i<t_objRES.getEndOfRepeatCount(); i++ )
+					this.m_sRESCompressWithRepeat += ">";
 
 
 				if ( !t_objRES.isInverted() ) continue;
@@ -370,6 +387,10 @@ public class SugarExporterWURCS implements GlycoVisitor
 		return this.m_strWURCSCodeCompress;
 	}
 
+	public String getWURCSCompressWithRepeat() {
+		return this.m_strWURCSCodeCompressWithRepeat;
+	}
+
 	private void makeLIN(GlycoEdge a_objEdge) throws GlycoVisitorException
 	{
 		this.makeLIN(a_objEdge, null);
@@ -484,6 +505,8 @@ public class SugarExporterWURCS implements GlycoVisitor
 				t_objLIN.setType(LIN.REPEAT);
 				t_objLIN.setMinRepeatCount( t_oRep.getMinRepeatCount() );
 				t_objLIN.setMaxRepeatCount( t_oRep.getMaxRepeatCount() );
+
+				this.m_hashNodeToBMU.get(t_objChild).countStartOfRepeat();
 			}
 			this.m_aLINs.add( t_objLIN );
 			return;
@@ -496,7 +519,9 @@ public class SugarExporterWURCS implements GlycoVisitor
 				t_objLIN.setType(LIN.REPEAT);
 				t_objLIN.setMinRepeatCount( t_oRep.getMinRepeatCount() );
 				t_objLIN.setMaxRepeatCount( t_oRep.getMaxRepeatCount() );
-			}
+
+				this.m_hashNodeToBMU.get(t_objChild).countStartOfRepeat();
+}
 			this.m_aLINs.add( t_objLIN );
 		}
 
@@ -520,7 +545,7 @@ public class SugarExporterWURCS implements GlycoVisitor
 				t_objRootNode = t_oUndetSubtree.getRootNodes().get(0);
 				// set flag for root of subtree
 				RES t_objBMU = this.m_hashNodeToBMU.get(t_objRootNode);
-				if ( t_objBMU != null ) t_objBMU.setRootOfSubgraph();
+				if ( t_objBMU != null ) t_objBMU.countStartOfRepeat();
 			} catch (GlycoconjugateException e) {
 				throw new GlycoVisitorException( e.getMessage() );
 			}
@@ -556,13 +581,13 @@ public class SugarExporterWURCS implements GlycoVisitor
 				t_objChildEdge = t_objRootNode.getChildEdges().get(0);
 				t_objChildNode = t_objChildEdge.getChild();
 			} else if ( t_oParents.size() == 1) {
-				// Substituent has no child and one parent -> ALIN for BMU
-				RES t_objBMU = this.m_hashNodeToBMU.get( t_oUndetSubtree.getParents().get(0) );
-				if ( t_objBMU != null )
-					t_objBMU.addSubstituent( (Substituent)t_objRootNode, t_oUndetSubtree );
+				// Substituent has no child and one parent -> MAP for RES
+				RES t_objRES = this.m_hashNodeToBMU.get( t_oUndetSubtree.getParents().get(0) );
+				if ( t_objRES != null )
+					t_objRES.addSubstituent( (Substituent)t_objRootNode, t_oUndetSubtree );
 				continue;
 			}
-			// Root substituent has two or more parents -> ALIN for LIN
+			// Root substituent has two or more parents -> MAP for LIN
 			LIN t_objLIN = new LIN( t_objParentEdge, t_objChildEdge, t_oParents , t_objChildNode, (Substituent)t_objRootNode );
 			// Set informations of underdetermined subtree to LIN
 			t_objLIN.setType(LIN.UNDERDETERMINED);
@@ -576,6 +601,9 @@ public class SugarExporterWURCS implements GlycoVisitor
 		this.m_strWURCSCodeCompress
 			= "WURCS="+this.m_strVersion+"/"+ this.m_aUniqueRESs.size()+","+this.m_aRESs.size()+","+this.m_aLINs.size()+"/"
 			+ this.m_sUniqueRES +"/"+ this.m_sRESCompress + "/" + this.m_sLIN;
+		this.m_strWURCSCodeCompressWithRepeat
+			= "WURCS="+this.m_strVersion+"/"+ this.m_aUniqueRESs.size()+","+this.m_aRESs.size()+","+this.m_aLINs.size()+"/"
+			+ this.m_sUniqueRES +"/"+ this.m_sRESCompressWithRepeat + "/" + this.m_sLIN;
 
 	}
 

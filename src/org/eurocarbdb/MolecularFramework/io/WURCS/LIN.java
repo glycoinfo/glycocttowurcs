@@ -214,6 +214,9 @@ public class LIN {
 			}
 		}
 
+		if ( this.getParentNodes().size() > 1 ) t_strParent += "}";
+		if ( this.getChildNodes().size() > 1 )  t_strChild = "{"+t_strChild;
+
 		// Swap parent and child
 		if ( t_bSwap ) {
 			String temp = t_strParent;
@@ -227,15 +230,15 @@ public class LIN {
 		}
 
 
-		String t_sMLU = "";
+		String t_sLIN = "";
 		if ( t_strChild == "" && t_strParent == "" ) {
 			throw new GlycoVisitorException("MLU must have at least one node.");
 		} else if ( t_strChild == "" || t_strParent == "" ) {
 //			t_sMLU += t_strChild.replace("-2", "") + t_strParent.replace("-1", "") + t_sMAP.substring(1);
-			t_sMLU += t_strChild.replace("2", "") + t_strParent.replace("1", "") + t_sMAP.substring(1);
+			t_sLIN += t_strChild.replace("2", "") + t_strParent.replace("1", "") + t_sMAP.substring(1);
 		} else {
 //			t_sMLU += t_strChild +","+ t_strParent + t_sMAP;
-			t_sMLU += t_strChild +"-"+ t_strParent + t_sMAP;
+			t_sLIN += t_strChild +"-"+ t_strParent + t_sMAP;
 		}
 
 
@@ -256,10 +259,10 @@ public class LIN {
 					t_strType += this.getMaxRepeatCount();
 				}
 			}
-			t_sMLU +=  t_strType;
+			t_sLIN +=  t_strType;
 		}
 
-		return t_sMLU;
+		return t_sLIN;
 	}
 
 	public String getGLIP(HashMap<Monosaccharide, Integer> hashMStoID, ArrayList<GlycoNode> aNodes, ArrayList<Integer> aPositions) {

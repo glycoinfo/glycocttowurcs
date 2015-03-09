@@ -28,6 +28,8 @@ public class RES {
 	private ArrayList<Substituent> m_aSubstituents = new ArrayList<Substituent>();
 	private HashMap<Substituent, UnderdeterminedSubTree> m_hashProbabilities = new HashMap<Substituent, UnderdeterminedSubTree>();
 	private boolean m_bRootOfSubgraph = false;
+	private int m_nStartOfRepeat = 0;
+	private int m_nEndOfRepeat = 0;
 	private boolean isInverted = false;
 
 	public RES(Monosaccharide a_objMonosaccharide) {
@@ -39,8 +41,9 @@ public class RES {
 	}
 
 	public void addSubstituent(Substituent a_objSubstituent, UnderdeterminedSubTree a_strUndetSubtree) {
-		m_aSubstituents.add(a_objSubstituent);
-		m_hashProbabilities.put(a_objSubstituent, a_strUndetSubtree);
+		if ( this.m_aSubstituents.contains(a_objSubstituent) ) return;
+		this.m_aSubstituents.add(a_objSubstituent);
+		this.m_hashProbabilities.put(a_objSubstituent, a_strUndetSubtree);
 	}
 
 	public Monosaccharide getMonosaccharide() {
@@ -55,8 +58,20 @@ public class RES {
 		this.m_bRootOfSubgraph = true;
 	}
 
-	public boolean isRootOfSubgraph() {
-		return this.m_bRootOfSubgraph;
+	public void countStartOfRepeat() {
+		this.m_nStartOfRepeat++;
+	}
+
+	public void countEndOfRepeat() {
+		this.m_nEndOfRepeat++;
+	}
+
+	public int getStartOfRepeatCount() {
+		return this.m_nStartOfRepeat;
+	}
+
+	public int getEndOfRepeatCount() {
+		return this.m_nEndOfRepeat;
 	}
 
 	private boolean hasParent() {
@@ -93,31 +108,20 @@ public class RES {
 
 		// Check anomeric position
 		LinkedList<Integer> anomPositions = new LinkedList<Integer>(); // If unknown empty
-/*		if ( this.hasParent() && this.m_objMonosaccharide.getParentEdge() != null) {
-			for ( Linkage link : this.m_objMonosaccharide.getParentEdge().getGlycosidicLinkages() ) {
-				for ( Integer pos : link.getChildLinkages() ) {
-					if ( anomPositions.contains(pos) ) continue;
-					anomPositions.add( pos );
-				}
-			}
-		}
-		Collections.sort(anomPositions);
-		// If contain unknown anomeric position
-		if ( anomPositions.isEmpty() && this.m_objMonosaccharide.getRingStart() > 0 )
-			anomPositions.add( this.m_objMonosaccharide.getRingStart() );
-		if ( anomPositions.contains(-1) ) anomPositions.clear();
-*/
+
 		// Get number of carbons and build base skeletoncode
+		boolean isAldose = true;
 		int numC = this.m_objMonosaccharide.getSuperclass().getCAtomCount();
 		if ( numC == 0 ) { // Number of carbons is unknown (For basetype "SUG")
-			skeleton = "<nx>h";
+			skeleton = "<0>";
+			isAldose = false;
 		} else { // Set all charactor to "*" and tail charactor to "h" (e.g. "*****h" for HEX)
+			skeleton = "h";
 			for ( int i=1; i < numC-1; i++ ) {
 				skeleton += "*";
 			}
 			skeleton += "h";
 		}
-		skeleton = "h" + skeleton;
 //		System.out.println(skeleton);
 
 		// Get stereocode
@@ -152,19 +156,11 @@ public class RES {
 			if (anom == 'b') anomCode = "3";
 			if (anom == 'o') anomCode = "o";
 		}
-		// For ketose
-		if ( this.m_objMonosaccharide.getRingStart() != 1 && !isUnknownRingSize )
-			anomCode = ( anomCode.equals("1") )? "5" :
-					   ( anomCode.equals("2") )? "6" :
-					   ( anomCode.equals("3") )? "7" :
-					   ( anomCode.equals("4") )? "8" :
-					   ( anomCode.equals("x") )? "X" : anomCode;
 //		System.out.println(anomSkelton);
 
 		// Modify base skeletoncode by core modifications
 		// if terminal carbon is modified, replace terminal skeletoncode
 		// if non-terminal carbon is modified, insert modification code into skeletoncode
-		boolean isAldose = true;
 		int nonTermModCount = 0;
 		ArrayList<Modification> enMods = new ArrayList<Modification>();
 		StringBuilder sb = new StringBuilder(skeleton);
@@ -239,19 +235,47 @@ public class RES {
 				sb.replace(pos-1, pos, "o");
 
 				// For anomeric position
-				if ( pos == this.m_objMonosaccharide.getRingStart())
-					sb.replace(pos-1, pos, anomCode);
+//				if ( pos == this.m_objMonosaccharide.getRingStart())
+//					sb.replace(pos-1, pos, anomCode);
 				continue;
 			}
 
 		}
+
 		// If aldose, set anomeric position to head of skeletoncode
 		if ( isAldose ) {
-			sb.replace(0, 1, "*");
-			if ( !isUnknownRingSize ) sb.replace(0, 1, anomCode);
+			sb.replace(0, 1, "o");
+//			if ( !isUnknownRingSize ) sb.replace(0, 1, anomCode);
 			anomPositions.add(1);
 		}
+
+		// If no anomeric position, it must be open chain structure
+		if ( anomPositions.size() == 0 ) {
+			isUnknownRingSize = false;
+			if ( numC != 0 ) anom = 'o';
+			else if( anom == 'x' ) anom = 'o';
+		} else {
+			// For ketose
+			if ( anomPositions.get(0) > 1 )
+			anomCode = ( anomCode.equals("1") )? "5" :
+					   ( anomCode.equals("2") )? "6" :
+					   ( anomCode.equals("3") )? "7" :
+					   ( anomCode.equals("4") )? "8" :
+					   ( anomCode.equals("x") )? "X" : anomCode;
+
+			// For unknown ring size at reducing end
+			if ( isUnknownRingSize && !this.hasParent() )
+				anomCode = ( anomCode == "x" )? "u" :
+						   ( anomCode == "X" )? "U" : anomCode;
+
+			// Replace anomeric position
+			for ( Integer pos : anomPositions )
+				sb.replace(pos-1, pos, anomCode);
+		}
+
+/*
 		if ( isUnknownRingSize ) {
+			// Set unknown anomeric symbol
 			for ( Integer pos : anomPositions ) {
 //				if ( this.hasParent() ) System.out.println(pos);
 				if ( anomCode == "x" && !this.hasParent() )
@@ -259,11 +283,13 @@ public class RES {
 				sb.replace(pos-1, pos, anomCode);
 			}
 		}
-
-//		for ( Integer pos : anomPositions ) {
-//			sb.replace(pos-1, pos, anomCode);
-//		}
-
+*/
+/*
+		else if ( anom != 'o' && !anomPositions.contains( this.m_objMonosaccharide.getRingStart() ) ) {
+			// Error for ring start position
+			throw new WURCSException("Ring start is not anomeric position.");
+		}
+*/
 
 		// For "en" or "enx" modifications
 		for (Modification enmod : enMods) {
@@ -339,25 +365,37 @@ public class RES {
 			String t_strMAP = this.getMAPCode(sub, sb);
 			if ( t_strMAP == null ) continue;
 
-			t_strMAP = this.modifySkeletonCodeBySubstituent(sub, t_strMAP, sb);
+			String t_strExtraMAP = this.modifySkeletonCodeBySubstituent(sub, t_strMAP, sb);
 			t_strMAP = this.insertProbability(sub, t_strMAP);
-			aMAPs.add( t_strMAP );
+
+			if ( t_strExtraMAP.equals("") ) {
+				aMAPs.add( t_strMAP );
+				continue;
+			}
+
+			if ( t_strMAP.length() < t_strExtraMAP.length() ) {
+				aMAPs.add( t_strMAP );
+				aMAPs.add( t_strExtraMAP );
+			} else {
+				aMAPs.add( t_strExtraMAP );
+				aMAPs.add( t_strMAP );
+			}
 		}
 		Collections.sort(aMAPs);
 
-		// Add anomeric position to SkeletonCode
+		// Add anomeric information to SkeletonCode
 		String strAnomPos = "";
-		if ( anom != 'o' && !( sb.toString().contains("u") || sb.toString().contains("U") ) ) {
+		if ( anom != 'o' && !( sb.toString().contains("u") || sb.toString().contains("U") )) {
 //			String pos = "+";
-			String pos = "-";
 			if ( this.m_objMonosaccharide.getRingStart() > 0) {
-				pos += ""+this.m_objMonosaccharide.getRingStart();
+				strAnomPos += ""+this.m_objMonosaccharide.getRingStart();
+			} else if ( numC != 0 ) {
+				strAnomPos += anomPositions.get(0);
 			} else {
-				pos += "?";
+				strAnomPos += "?";
 			}
-			strAnomPos += pos+anom;
+			sb.append("-"+strAnomPos+anom);
 		}
-		sb.append(strAnomPos);
 
 		// Add ring information
 		String strRingPos = "";
@@ -366,7 +404,7 @@ public class RES {
 			strRingPos += "_" + this.m_objMonosaccharide.getRingStart() + "-" + this.m_objMonosaccharide.getRingEnd();
 		} else if ( isUnknownRingSize && !( sb.toString().contains("u") || sb.toString().contains("U") ) ) {
 //			strRingPos += "|?,?";
-			strRingPos += "_?-?";
+			strRingPos += "_"+strAnomPos+"-?";
 		}
 		sb.append(strRingPos);
 //		System.out.println(sb.toString());
@@ -625,8 +663,11 @@ public class RES {
 	 * @return String of modified SkeletonCode
 	 */
 	private String modifySkeletonCodeBySubstituent(Substituent sub, String a_strMAP, StringBuilder sb) {
-		if ( sb.toString().contains("<nx>") ) return a_strMAP;
-		if ( !Character.isDigit( a_strMAP.charAt(0) ) || !a_strMAP.contains("*") ) return a_strMAP;
+
+		if ( sb.toString().contains("<0>") ) return "";
+		if ( !Character.isDigit( a_strMAP.charAt(0) ) || !a_strMAP.contains("*") ) return "";
+
+		String t_extraMAP = "";
 		Integer pos = Integer.valueOf( a_strMAP.substring(0, 1) );
 		char head = ( a_strMAP.contains("*") )? a_strMAP.charAt( a_strMAP.indexOf("*")+1 ) : 'O';
 //		System.out.println( pos );
@@ -637,12 +678,7 @@ public class RES {
 				// if substituted hydroxy group on carboxyl group
 				sb.replace(pos-1, pos, "A");
 			}
-			String t_extraMAP = pos + "*=O";
-			if ( a_strMAP.length() < t_extraMAP.length() ) {
-				a_strMAP += "_"+t_extraMAP;
-			} else {
-				a_strMAP = t_extraMAP +"_"+ a_strMAP;
-			}
+			t_extraMAP = pos + "*=O";
 		} else if ( sb.charAt(pos-1) == 'h' ) {
 			// for terminal hydroxyl group
 			if ( head != 'O' ) {
@@ -651,10 +687,11 @@ public class RES {
 			}
 		}
 		// For substitution of H on carbon
-		if ( sub.getParentEdge().getGlycosidicLinkages().get(0).getParentLinkageType() == LinkageType.H_LOSE ) {
+		if ( sub.getParentEdge() != null &&
+				sub.getParentEdge().getGlycosidicLinkages().get(0).getParentLinkageType() == LinkageType.H_LOSE ) {
 			System.out.println("LinkageType is H_LOSE \"h\".");
 
-			String t_extraMAP = pos + "*O";
+			t_extraMAP = pos + "*O";
 			boolean isSwap = false;
 			String t_strSymbol = ""+a_strMAP.charAt(2);
 			if ( a_strMAP.length()>3 && Character.isLowerCase( a_strMAP.charAt(3) ) )
@@ -666,10 +703,7 @@ public class RES {
 				isSwap = true;
 			}
 			char c = sb.charAt(pos-1);
-			if ( !isSwap ) {
-				a_strMAP += "_"+t_extraMAP;
-			} else {
-				a_strMAP = t_extraMAP +"_"+ a_strMAP;
+			if ( isSwap ) {
 				c = (c == '1')? '2' :
 					(c == '2')? '1' :
 					(c == '3')? '4' :
@@ -683,7 +717,7 @@ public class RES {
 							 (c == 'x')? "X" : ""+c;
 			sb.replace(pos-1, pos, replace);
 		}
-		return a_strMAP;
+		return t_extraMAP;
 	}
 
 	private String insertProbability(Substituent sub, String a_strMAP) {
@@ -694,6 +728,9 @@ public class RES {
 		if (t_dUpper == 1.0 && t_dLower == 1.0 ) return a_strMAP;
 
 		String t_strProb = NumberFormat.getNumberInstance().format(t_dLower).substring(1);
+		if (t_dUpper < 0.0 && t_dLower < 0.0) { // probability is unknown
+			t_strProb = "?";
+		}
 		if ( t_dUpper != t_dLower ) {
 			t_strProb += ":"+ NumberFormat.getNumberInstance().format(t_dUpper).substring(1);
 		}
