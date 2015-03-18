@@ -349,20 +349,36 @@ public class SugarExporterWURCS implements GlycoVisitor
 
 					// For substituent node
 					// Node ID
-					if (  oLIN1.getParentNodes().isEmpty() && !oLIN2.getParentNodes().isEmpty() ) return -1;
-					if ( !oLIN1.getParentNodes().isEmpty() &&  oLIN2.getParentNodes().isEmpty() ) return 1;
-					if (  oLIN1.getChildNodes().isEmpty() && !oLIN2.getChildNodes().isEmpty() ) return -1;
-					if ( !oLIN1.getChildNodes().isEmpty() &&  oLIN2.getChildNodes().isEmpty() ) return 1;
+					GlycoNode oParentMS1 = oLIN1.getParentNodes().get(0);
+					GlycoNode oParentMS2 = oLIN2.getParentNodes().get(0);
+					GlycoNode oChildMS1 = oLIN1.getChildNodes().get(0);
+					GlycoNode oChildMS2 = oLIN2.getChildNodes().get(0);
+					if ( oParentMS1 != null && oParentMS2 == null ) return -1;
+					if ( oParentMS1 == null && oParentMS2 != null ) return 1;
+					if ( oChildMS1 != null && oChildMS2 == null ) return -1;
+					if ( oChildMS1 == null && oChildMS2 != null ) return 1;
 
-					if (  hashMStoID.containsKey( oLIN1.getParentNodes().get(0) ) && !hashMStoID.containsKey( oLIN2.getParentNodes().get(0) ) ) return -1;
-					if ( !hashMStoID.containsKey( oLIN1.getParentNodes().get(0) ) &&  hashMStoID.containsKey( oLIN2.getParentNodes().get(0) ) ) return 1;
-					if (  hashMStoID.containsKey( oLIN1.getChildNodes().get(0) ) && !hashMStoID.containsKey( oLIN2.getChildNodes().get(0) ) ) return -1;
-					if ( !hashMStoID.containsKey( oLIN1.getChildNodes().get(0) ) &&  hashMStoID.containsKey( oLIN2.getChildNodes().get(0) ) ) return 1;
+					if ( oChildMS1  == null && oChildMS2 == null ) {
+						if ( oParentMS1 == null && oParentMS1 == null ) return 0;
+						if ( oLIN1.getParentNodes().size() < oLIN2.getParentNodes().size() ) return -1;
+						if ( oLIN1.getParentNodes().size() > oLIN2.getParentNodes().size() ) return 1;
+						for ( int i=0; i< oLIN1.getParentNodes().size(); i++ ) {
+							int parentID1 = hashMStoID.get( oLIN1.getParentNodes().get(i) );
+							int parentID2 = hashMStoID.get( oLIN2.getParentNodes().get(i) );
+							if ( parentID1 < parentID2 ) return -1;
+							if ( parentID1 > parentID2 ) return 1;
+						}
+						return 0;
+					}
+					if (  hashMStoID.get( oParentMS1 ) != null && hashMStoID.get( oParentMS2 ) == null ) return -1;
+					if (  hashMStoID.get( oParentMS1 ) == null && hashMStoID.get( oParentMS2 ) != null ) return 1;
+					if (  hashMStoID.get( oChildMS1 ) != null && hashMStoID.get( oChildMS2 ) == null ) return -1;
+					if (  hashMStoID.get( oChildMS1 ) == null && hashMStoID.get( oChildMS2 ) != null ) return 1;
 
-					int parentID1 = hashMStoID.get( oLIN1.getParentNodes().get(0) );
-					int parentID2 = hashMStoID.get( oLIN2.getParentNodes().get(0) );
-					int childID1 = hashMStoID.get( oLIN1.getChildNodes().get(0) );
-					int childID2 = hashMStoID.get( oLIN2.getChildNodes().get(0) );
+					int parentID1 = hashMStoID.get( oParentMS1 );
+					int parentID2 = hashMStoID.get( oParentMS2 );
+					int childID1 = hashMStoID.get( oChildMS1 );
+					int childID2 = hashMStoID.get( oChildMS2 );
 					if ( Math.min(parentID1,childID1) < Math.min(parentID2,childID2) ) return -1;
 					if ( Math.min(parentID1,childID1) > Math.min(parentID2,childID2) ) return 1;
 //					if ( Math.max(parentID1,childID1) < Math.max(parentID2,childID2) ) return -1;

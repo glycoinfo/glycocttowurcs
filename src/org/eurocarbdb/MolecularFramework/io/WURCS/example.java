@@ -253,6 +253,92 @@ public class example {
 	System.out.println( t_exporter3.getWURCS() );
 	System.out.println( t_exporter3.getWURCSCompress() );
 
+	t_strCode
+	= "RES\n"
+	+ "1b:x-dglc-HEX-1:5\n"
+	+ "2s:n-acetyl\n"
+	+ "3b:b-dglc-HEX-1:5\n"
+	+ "4s:n-acetyl\n"
+	+ "5b:b-dman-HEX-1:5\n"
+	+ "6b:a-dman-HEX-1:5\n"
+	+ "7b:x-HEX-x:x\n"
+	+ "8s:n-acetyl\n"
+	+ "9b:b-dgal-HEX-1:5\n"
+	+ "10b:a-dgro-dgal-NON-2:6|1:a|2:keto|3:d\n"
+	+ "11s:n-acetyl\n"
+	+ "12b:a-dgro-dgal-NON-2:6|1:a|2:keto|3:d\n"
+	+ "13s:n-acetyl\n"
+	+ "14b:a-dman-HEX-1:5\n"
+	+ "15b:x-HEX-x:x\n"
+	+ "16s:n-acetyl\n"
+	+ "17b:b-dgal-HEX-1:5\n"
+	+ "18b:a-dgro-dgal-NON-2:6|1:a|2:keto|3:d\n"
+	+ "19s:n-acetyl\n"
+	+ "LIN\n"
+	+ "1:1d(2+1)2n\n"
+	+ "2:1o(4+1)3d\n"
+	+ "3:3d(2+1)4n\n"
+	+ "4:3o(4+1)5d\n"
+	+ "5:5o(-1+1)6d\n"
+	+ "6:6o(-1+1)7d\n"
+	+ "7:7d(2+1)8n\n"
+	+ "8:7o(4+1)9d\n"
+	+ "9:9o(3+2)10d\n"
+	+ "10:10d(5+1)11n\n"
+	+ "11:10o(8+2)12d\n"
+	+ "12:12d(5+1)13n\n"
+	+ "13:5o(-1+1)14d\n"
+	+ "14:14o(-1+1)15d\n"
+	+ "15:15d(2+1)16n\n"
+	+ "16:15o(4+1)17d\n"
+	+ "17:17o(3+2)18d\n"
+	+ "18:18d(5+1)19n\n"
+	+ "UND\n"
+	+ "UND1:100.0:100.0\n"
+	+ "ParentIDs:1|3|5|6|7|9|10|12|14|15|17|18\n"
+	+ "SubtreeLinkageID1:o(-1+1)n\n"
+	+ "RES\n"
+	+ "20s:acetyl\n"
+	+ "UND2:100.0:100.0\n"
+	+ "ParentIDs:1|3|5|6|7|9|10|12|14|15|17|18\n"
+	+ "SubtreeLinkageID1:o(-1+1)n\n"
+	+ "RES\n"
+	+ "21s:acetyl\n"
+	+ "UND3:100.0:100.0\n"
+	+ "ParentIDs:1|3|5|6|7|9|10|12|14|15|17|18\n"
+	+ "SubtreeLinkageID1:o(-1+1)n\n"
+	+ "RES\n"
+	+ "22s:acetyl";
+	
+	System.out.println( t_strCode );
+
+	try {
+		g2 = t_objImporterGlycoCT.parse(t_strCode);
+	} catch ( SugarImporterException e ) {
+		System.out.println(e.getErrorText());
+	}
+	// GlycoCT must be validated by GlycoVisitorValidation
+	validation.start(g2);
+	if ( validation.getErrors().size() > 0 ) {
+		System.out.println("Errors:");
+		for ( String err : validation.getErrors() ) {
+			System.out.println( err );
+		}
+		System.out.println("Warnings:");
+		for ( String warn : validation.getWarnings() ) {
+			System.out.println( warn );
+		}
+		System.out.println();
+	}
+
+	try {
+		t_exporter3.start(g2);
+	} catch ( GlycoVisitorException e ) {
+		System.out.println(e.getErrorMessage());
+	}
+	System.out.println( t_exporter3.getWURCS() );
+	System.out.println( t_exporter3.getWURCSCompress() );
+
 	}
 
 }
