@@ -347,7 +347,18 @@ public class SugarExporterWURCS implements GlycoVisitor
 					if ( LINCode1.indexOf('%') == -1 && LINCode2.indexOf('%') != -1 ) return -1;
 					if ( LINCode1.indexOf('%') != -1 && LINCode2.indexOf('%') == -1 ) return 1;
 
+					// For substituent node
 					// Node ID
+					if (  oLIN1.getParentNodes().isEmpty() && !oLIN2.getParentNodes().isEmpty() ) return -1;
+					if ( !oLIN1.getParentNodes().isEmpty() &&  oLIN2.getParentNodes().isEmpty() ) return 1;
+					if (  oLIN1.getChildNodes().isEmpty() && !oLIN2.getChildNodes().isEmpty() ) return -1;
+					if ( !oLIN1.getChildNodes().isEmpty() &&  oLIN2.getChildNodes().isEmpty() ) return 1;
+
+					if (  hashMStoID.containsKey( oLIN1.getParentNodes().get(0) ) && !hashMStoID.containsKey( oLIN2.getParentNodes().get(0) ) ) return -1;
+					if ( !hashMStoID.containsKey( oLIN1.getParentNodes().get(0) ) &&  hashMStoID.containsKey( oLIN2.getParentNodes().get(0) ) ) return 1;
+					if (  hashMStoID.containsKey( oLIN1.getChildNodes().get(0) ) && !hashMStoID.containsKey( oLIN2.getChildNodes().get(0) ) ) return -1;
+					if ( !hashMStoID.containsKey( oLIN1.getChildNodes().get(0) ) &&  hashMStoID.containsKey( oLIN2.getChildNodes().get(0) ) ) return 1;
+
 					int parentID1 = hashMStoID.get( oLIN1.getParentNodes().get(0) );
 					int parentID2 = hashMStoID.get( oLIN2.getParentNodes().get(0) );
 					int childID1 = hashMStoID.get( oLIN1.getChildNodes().get(0) );

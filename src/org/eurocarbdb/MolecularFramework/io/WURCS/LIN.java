@@ -231,9 +231,9 @@ public class LIN {
 
 
 		String t_sLIN = "";
-		if ( t_strChild == "" && t_strParent == "" ) {
+		if ( t_strChild.equals("") && t_strParent.equals("") ) {
 			throw new GlycoVisitorException("MLU must have at least one node.");
-		} else if ( t_strChild == "" || t_strParent == "" ) {
+		} else if ( t_strChild.equals("") || t_strParent.equals("") ) {
 //			t_sMLU += t_strChild.replace("-2", "") + t_strParent.replace("-1", "") + t_sMAP.substring(1);
 			t_sLIN += t_strChild.replace("2", "") + t_strParent.replace("1", "") + t_sMAP.substring(1);
 		} else {
